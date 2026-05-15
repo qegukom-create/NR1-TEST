@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NR1 - Global Experience Directory</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root { 
+            --bg: #0f172a; --card: #1e293b; --primary: #fbbf24; 
+            --text: #f8fafc; --border: #334155; --danger: #ef4444; 
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; }
+        h1 { color: var(--primary); text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; font-size: 0.95rem; }
+        
+        /* Grid des rôles */
+        .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+		
+		        .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+        .btn-nav:hover { background: rgba(251, 191, 36, 0.1); }
+		        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        
+        /* Vignette de Rôle */
+        .role-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px; 
+            padding: 20px; display: flex; flex-direction: column; height: fit-content; min-height: 300px;
+        }
+        .role-header { 
+            font-size: 1.2rem; font-weight: bold; color: var(--primary); 
+            text-transform: uppercase; border-bottom: 2px solid var(--border); 
+            padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .role-count { background: #0f172a; color: #94a3b8; font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; }
+
+        /* Liste des joueurs dans le rôle */
+        .assigned-players { flex: 1; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
+        
+        .player-badge { 
+            background: #0f172a; border: 1px solid var(--border); border-radius: 8px; 
+            padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+        }
+        .player-badge span { font-weight: bold; }
+        .btn-remove { background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 0.85rem; padding: 2px 5px; transition: 0.2s; }
+        .btn-remove:hover { color: var(--danger); }
+
+        /* Selecteur d'ajout */
+        .add-zone { border-top: 1px solid var(--border); padding-top: 15px; }
+        select { 
+            background: #0f172a; border: 1px solid var(--border); color: white; 
+            padding: 10px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; font-size: 0.85rem;
+        }
+        select:hover { border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    
+	    <div class="header-area">
+        <div class="header-title">
+            <h1>🌍 GLOBAL EXPERIENCE DIRECTORY</h1>
+        </div>
+        <a href="https://qegukom-create.github.io/NR1-SWORDLAND/" class="btn-nav">📂 return</a>
+    </div>
+	
+	
+	
+    <div class="roles-grid">
+        <div class="role-card" id="card-Commander">
+            <div class="role-header">👑 Commanders <span class="role-count" id="count-Commander">0</span></div>
+            <div class="assigned-players" id="list-Commander"></div>
+            <div class="add-zone"><select id="select-Commander" onchange="addPlayerToRole('Commander', this.value)"><option value="">+ Add Commander...</option></select></div>
+        </div>
+
+        <div class="role-card" id="card-Rally-Leader">
+            <div class="role-header">⚔️ Rally Leaders <span class="role-count" id="count-Rally-Leader">0</span></div>
+            <div class="assigned-players" id="list-Rally-Leader"></div>
+            <div class="add-zone"><select id="select-Rally-Leader" onchange="addPlayerToRole('Rally-Leader', this.value)"><option value="">+ Add Rally Leader...</option></select></div>
+        </div>
+
+        <div class="role-card" id="card-Defender">
+            <div class="role-header">🛡️ Defenders <span class="role-count" id="count-Defender">0</span></div>
+            <div class="assigned-players" id="list-Defender"></div>
+            <div class="add-zone"><select id="select-Defender" onchange="addPlayerToRole('Defender', this.value)"><option value="">+ Add Defender...</option></select></div>
+        </div>
+
+        <div class="role-card" id="card-Support">
+            <div class="role-header">⚡ Support <span class="role-count" id="count-Support">0</span></div>
+            <div class="assigned-players" id="list-Support"></div>
+            <div class="add-zone"><select id="select-Support" onchange="addPlayerToRole('Support', this.value)"><option value="">+ Add Support...</option></select></div>
+        </div>
+
+        <div class="role-card" id="card-Assassin">
+            <div class="role-header">🏹 Assassins <span class="role-count" id="count-Assassin">0</span></div>
+            <div class="assigned-players" id="list-Assassin"></div>
+            <div class="add-zone"><select id="select-Assassin" onchange="addPlayerToRole('Assassin', this.value)"><option value="">+ Add Assassin...</option></select></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA8edMWQreJMKrbS8MuowKZl58x7W5vfBU",
+        authDomain: "nr1-vikings.firebaseapp.com",
+        databaseURL: "https://nr1-vikings-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "nr1-vikings"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const rolesList = ["Commander", "Rally-Leader", "Defender", "Support", "Assassin"];
+    let cachedPlayers = {};
+
+    function loadData() {
+        db.ref().on('value', snap => {
+            const data = snap.val() || {};
+            cachedPlayers = data.alliance_database || {};
+            const globalRoles = data.global_experience || {};
+
+            // 1. Vider les listes et compteurs actuels
+            rolesList.forEach(role => {
+                document.getElementById(`list-${role}`).innerHTML = "";
+                document.getElementById(`count-${role}`).innerText = "0";
+            });
+
+            // Objet pour compter le nombre de joueurs par rôle
+            let counts = { "Commander": 0, "Rally-Leader": 0, "Defender": 0, "Support": 0, "Assassin": 0 };
+
+            // 2. Parcourir les rôles stockés dans Firebase et injecter les badges
+            Object.keys(globalRoles).forEach(pId => {
+                const playerRoles = globalRoles[pId] || [];
+                const pName = cachedPlayers[pId]?.name || "Unknown Player";
+
+                playerRoles.forEach(role => {
+                    if (rolesList.includes(role)) {
+                        counts[role]++;
+                        const listContainer = document.getElementById(`list-${role}`);
+                        listContainer.innerHTML += `
+                            <div class="player-badge">
+                                <span>${pName}</span>
+                                <button class="btn-remove" onclick="removePlayerFromRole('${role}', '${pId}')">✕</button>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            // Mettre à jour les compteurs visuels
+            rolesList.forEach(role => {
+                document.getElementById(`count-${role}`).innerText = counts[role];
+            });
+
+            // 3. Rafraîchir les menus déroulants d'ajout
+            updateSelectMenus(globalRoles);
+        });
+    }
+
+    function updateSelectMenus(globalRoles) {
+        rolesList.forEach(role => {
+            const select = document.getElementById(`select-${role}`);
+            const cleanRoleName = role.replace(/-/g, ' ');
+            select.innerHTML = `<option value="">+ Add ${cleanRoleName}...</option>`;
+
+            // Ajouter uniquement les joueurs qui n'ont pas encore ce rôle précis
+            Object.keys(cachedPlayers).sort((a,b) => cachedPlayers[a].name.localeCompare(cachedPlayers[b].name)).forEach(id => {
+                const pRoles = globalRoles[id] || [];
+                if (!pRoles.includes(role)) {
+                    select.innerHTML += `<option value="${id}">${cachedPlayers[id].name}</option>`;
+                }
+            });
+        });
+    }
+
+    function addPlayerToRole(role, playerId) {
+        if (!playerId) return;
+        const ref = db.ref(`global_experience/${playerId}`);
+        
+        ref.once('value', snap => {
+            let currentRoles = snap.val() || [];
+            if (!currentRoles.includes(role)) {
+                currentRoles.push(role);
+                ref.set(currentRoles);
+            }
+        });
+    }
+
+    function removePlayerFromRole(role, playerId) {
+        const ref = db.ref(`global_experience/${playerId}`);
+        
+        ref.once('value', snap => {
+            let currentRoles = snap.val() || [];
+            currentRoles = currentRoles.filter(r => r !== role);
+            if (currentRoles.length === 0) {
+                ref.remove(); // Nettoie le noeud si le joueur n'a plus aucun rôle
+            } else {
+                ref.set(currentRoles);
+            }
+        });
+    }
+
+    loadData();
+</script>
+</body>
+</html>

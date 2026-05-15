@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NR1 - Swordland Tactical Grid 5x5</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root { 
+            --bg: #0f172a; --card: #1e293b; --primary: #fbbf24; 
+            --text: #f8fafc; --border: #334155;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1300px; margin: auto; }
+        
+        /* Header Layout */
+        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .header-title h1 { color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 1.8rem; }
+        .header-title p { margin: 5px 0 0 0; color: #94a3b8; font-size: 0.95rem; }
+        
+        .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+        .btn-nav:hover { background: rgba(251, 191, 36, 0.1); }
+
+        /* Legion Tabs */
+        .legion-tabs { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
+        .tab-btn { background: #1e293b; border: 2px solid var(--border); color: #94a3b8; padding: 12px 40px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .tab-btn.active { border-color: var(--primary); color: var(--primary); background: rgba(251, 191, 36, 0.05); box-shadow: 0 0 15px rgba(251, 191, 36, 0.1); }
+
+        /* Tactical Grid 5x5 */
+        .tactical-map { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            grid-template-rows: repeat(5, auto); 
+            gap: 15px; 
+            background: #0b111e; 
+            padding: 20px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border);
+        }
+        
+        /* Grid Items - Hidden but preserving space */
+        .grid-cell { visibility: hidden; min-height: 120px; }
+        
+        .building-box { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 12px; border-top: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        
+        .building-name { font-weight: bold; color: white; display: block; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        
+        .slot { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+        .slot:last-child { margin-bottom: 0; }
+        .slot label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
+        
+        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 5px; border-radius: 5px; font-size: 0.8rem; outline: none; width: 100%; cursor: pointer; }
+        select:hover { border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-area">
+        <div class="header-title">
+            <h1>⚔️ SWORDLAND STRATEGIC MAP</h1>
+        </div>
+        <a href="experience.html" class="btn-nav">📂 Open Experience Directory</a>
+    </div>
+
+    <div class="legion-tabs">
+        <button class="tab-btn active" id="btn-legion1" onclick="switchLegion('legion1')">🛡️ Legion 1 (12:00)</button>
+        <button class="tab-btn" id="btn-legion2" onclick="switchLegion('legion2')">⚡ Legion 2 (19:00)</button>
+    </div>
+
+    <div class="tactical-map" id="map-grid"></div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA8edMWQreJMKrbS8MuowKZl58x7W5vfBU",
+        authDomain: "nr1-vikings.firebaseapp.com",
+        databaseURL: "https://nr1-vikings-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "nr1-vikings"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentLegion = 'legion1';
+    let allianceDatabase = {};
+    let globalExperience = {};
+
+    const mapLayout = {
+        "1-2": { id: "Belltower", name: "Bell Tower" },
+        "1-4": { id: "Abbey-1", name: "Abbey 1" },
+        "2-3": { id: "Mercenary-Camp", name: "Mercenary Camp" },
+        "2-1": { id: "Northwest-Sanctum", name: "Northwest Sanctum" },
+        "3-3": { id: "Swordshrine", name: "Swordshrine" },
+        "2-5": { id: "Abbey-2", name: "Abbey 2" },
+        "4-3": { id: "Hall-of-Reformation", name: "Hall of Reformation" },
+        "3-1": { id: "Abbey-3", name: "Abbey 3" },
+        "3-5": { id: "Southeast-Sanctum", name: "Southeast Sanctum" }
+    };
+
+    function buildGridHTML() {
+        const gridContainer = document.getElementById('map-grid');
+        gridContainer.innerHTML = '';
+
+        let commandersOptions = '<option value="">Unassigned</option>';
+        let rallyLeadersOptions = '<option value="">Unassigned</option>';
+
+        const sortedPlayerIds = Object.keys(allianceDatabase).sort((a,b) => 
+            allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
+        );
+
+        sortedPlayerIds.forEach(id => {
+            const pName = allianceDatabase[id].name;
+            const pRoles = globalExperience[id] || [];
+            if (pRoles.includes("Commander")) commandersOptions += `<option value="${id}">${pName}</option>`;
+            if (pRoles.includes("Rally-Leader")) rallyLeadersOptions += `<option value="${id}">${pName}</option>`;
+        });
+
+        for (let row = 1; row <= 5; row++) {
+            for (let col = 1; col <= 5; col++) {
+                const coord = `${row}-${col}`;
+                
+                if (mapLayout[coord]) {
+                    const b = mapLayout[coord];
+                    gridContainer.innerHTML += `
+                        <div class="building-box">
+                            <span class="building-name">${b.name}</span>
+                            <div class="slot">
+                                <label>👑 Commander</label>
+                                <select data-building="${b.id}" data-role="commander" onchange="saveAssignment('${b.id}', 'commander', this.value)">
+                                    ${commandersOptions}
+                                </select>
+                            </div>
+                            <div class="slot">
+                                <label>⚔️ Rally 1</label>
+                                <select data-building="${b.id}" data-role="rl1" onchange="saveAssignment('${b.id}', 'rl1', this.value)">
+                                    ${rallyLeadersOptions}
+                                </select>
+                            </div>
+                            <div class="slot">
+                                <label>⚔️ Rally 2</label>
+                                <select data-building="${b.id}" data-role="rl2" onchange="saveAssignment('${b.id}', 'rl2', this.value)">
+                                    ${rallyLeadersOptions}
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    gridContainer.innerHTML += `<div class="grid-cell"></div>`;
+                }
+            }
+        }
+    }
+
+    function init() {
+        db.ref().on('value', snap => {
+            const data = snap.val() || {};
+            allianceDatabase = data.alliance_database || {};
+            globalExperience = data.global_experience || {};
+
+            buildGridHTML();
+            loadAssignments();
+        });
+    }
+
+    function switchLegion(legion) {
+        currentLegion = legion;
+        document.getElementById('btn-legion1').classList.toggle('active', legion === 'legion1');
+        document.getElementById('btn-legion2').classList.toggle('active', legion === 'legion2');
+        loadAssignments();
+    }
+
+    function saveAssignment(building, role, playerId) {
+        db.ref(`swordland_tactical/${currentLegion}/${building}/${role}`).set(playerId);
+    }
+
+    function loadAssignments() {
+        db.ref(`swordland_tactical/${currentLegion}`).once('value', snap => {
+            const data = snap.val() || {};
+            
+            document.querySelectorAll('select').forEach(s => s.value = "");
+
+            Object.keys(data).forEach(buildingId => {
+                const roles = data[buildingId];
+                Object.keys(roles).forEach(role => {
+                    const select = document.querySelector(`select[data-building="${buildingId}"][data-role="${role}"]`);
+                    if (select) {
+                        select.value = roles[role];
+                    }
+                });
+            });
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>
