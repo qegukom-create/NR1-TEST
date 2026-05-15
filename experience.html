@@ -146,7 +146,7 @@
             globalExperience = data.global_experience || {};
 
             const selectPlayer = document.getElementById('select-player');
-            selectPlayer.innerHTML = '<option value="">Sélectionner un Joueur...</option>';
+            selectPlayer.innerHTML = '<option value="">Select player...</option>';
             
             const sortedIds = Object.keys(allianceDatabase).sort((a,b) => 
                 allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
