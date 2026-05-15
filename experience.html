@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,95 +9,103 @@
     <style>
         :root { 
             --bg: #0f172a; --card: #1e293b; --primary: #fbbf24; 
-            --text: #f8fafc; --border: #334155; --danger: #ef4444; 
+            --text: #f8fafc; --border: #334155; --danger: #ef4444; --success: #22c55e;
         }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1400px; margin: auto; }
-        h1 { color: var(--primary); text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; font-size: 0.95rem; }
+        .container { max-width: 1200px; margin: auto; }
         
-        /* Grid des rôles */
-        .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-		
-		        .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+        /* Header */
+        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .header-title h1 { color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 1.8rem; }
+        .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
         .btn-nav:hover { background: rgba(251, 191, 36, 0.1); }
-		        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        
-        /* Vignette de Rôle */
-        .role-card { 
-            background: var(--card); border: 1px solid var(--border); border-radius: 16px; 
-            padding: 20px; display: flex; flex-direction: column; height: fit-content; min-height: 300px;
-        }
-        .role-header { 
-            font-size: 1.2rem; font-weight: bold; color: var(--primary); 
-            text-transform: uppercase; border-bottom: 2px solid var(--border); 
-            padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .role-count { background: #0f172a; color: #94a3b8; font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; }
 
-        /* Liste des joueurs dans le rôle */
-        .assigned-players { flex: 1; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
-        
-        .player-badge { 
-            background: #0f172a; border: 1px solid var(--border); border-radius: 8px; 
-            padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
-        }
-        .player-badge span { font-weight: bold; }
-        .btn-remove { background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 0.85rem; padding: 2px 5px; transition: 0.2s; }
-        .btn-remove:hover { color: var(--danger); }
+        /* Setup Area */
+        .setup-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
+        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; }
+        .btn-add { background: var(--primary); color: #0f172a; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-add:hover { background: #f59e0b; }
 
-        /* Selecteur d'ajout */
-        .add-zone { border-top: 1px solid var(--border); padding-top: 15px; }
-        select { 
-            background: #0f172a; border: 1px solid var(--border); color: white; 
-            padding: 10px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; font-size: 0.85rem;
-        }
-        select:hover { border-color: var(--primary); }
+        /* Grid Vignettes */
+        .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .role-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; border-top: 4px solid var(--primary); }
+        .role-title { font-weight: bold; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; }
+        
+        /* List Items */
+        .player-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .player-item { background: #0f172a; padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
+        .player-name { cursor: pointer; font-size: 0.9rem; font-weight: 500; flex-grow: 1; }
+        .player-name:hover { color: var(--primary); text-decoration: underline; }
+        .btn-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: bold; font-size: 0.85rem; padding: 0 5px; }
+        .btn-remove:hover { transform: scale(1.2); }
+
+        /* Modal Dialog Style */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 400px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .modal-header { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; text-transform: uppercase; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .form-group label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
+        .form-group input[type="number"] { background: #0f172a; color: white; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 1rem; outline: none; }
+        .form-group input[type="number"]:focus { border-color: var(--primary); }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; cursor: pointer; background: #0f172a; padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
+        .checkbox-group input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-modal { padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.9rem; }
+        .btn-cancel { background: #334155; color: white; }
+        .btn-save { background: var(--success); color: #0f172a; }
     </style>
 </head>
 <body>
 
 <div class="container">
-
-    
-	    <div class="header-area">
+    <div class="header-area">
         <div class="header-title">
-            <h1>🌍 GLOBAL EXPERIENCE DIRECTORY</h1>
+            <h1>📂 Experience & Roles Directory</h1>
         </div>
-        <a href="https://qegukom-create.github.io/NR1-TEST/" class="btn-nav">📂 return</a>
+        <a href="swordland.html" class="btn-nav">⚔️ Back to Tactical Board</a>
     </div>
-	
-	
-	
+
+    <div class="setup-box">
+        <select id="select-player"><option value="">Sélectionner un Joueur...</option></select>
+        <select id="select-role">
+            <option value="Commander">👑 Commander</option>
+            <option value="Rally-Leader">⚔️ Rally Leader</option>
+            <option value="Defenders">🛡️ Defender</option>
+            <option value="Support">❤️ Support</option>
+            <option value="Assassins">🥷 Assassin</option>
+        </select>
+        <button class="btn-add" onclick="addRoleToPlayer()">Assigner le Rôle</button>
+    </div>
+
     <div class="roles-grid">
-        <div class="role-card" id="card-Commander">
-            <div class="role-header">👑 Commanders <span class="role-count" id="count-Commander">0</span></div>
-            <div class="assigned-players" id="list-Commander"></div>
-            <div class="add-zone"><select id="select-Commander" onchange="addPlayerToRole('Commander', this.value)"><option value="">+ Add Commander...</option></select></div>
+        <div class="role-card"><div class="role-title">👑 Commanders</div><ul class="player-list" id="role-Commander"></ul></div>
+        <div class="role-card"><div class="role-title">⚔️ Rally Leaders</div><ul class="player-list" id="role-Rally-Leader"></ul></div>
+        <div class="role-card"><div class="role-title">🛡️ Defenders</div><ul class="player-list" id="role-Defenders"></ul></div>
+        <div class="role-card"><div class="role-title">❤️ Support</div><ul class="player-list" id="role-Support"></ul></div>
+        <div class="role-card"><div class="role-title">🥷 Assassins</div><ul class="player-list" id="role-Assassins"></ul></div>
+    </div>
+</div>
+
+<div class="modal" id="tracking-modal">
+    <div class="modal-content">
+        <div class="modal-header" id="modal-player-title">Suivi de performance</div>
+        
+        <div class="form-group">
+            <label>Présence à l'événement</label>
+            <label class="checkbox-group">
+                <input type="checkbox" id="modal-present" checked>
+                <span>Présent / Actif</span>
+            </label>
         </div>
 
-        <div class="role-card" id="card-Rally-Leader">
-            <div class="role-header">⚔️ Rally Leaders <span class="role-count" id="count-Rally-Leader">0</span></div>
-            <div class="assigned-players" id="list-Rally-Leader"></div>
-            <div class="add-zone"><select id="select-Rally-Leader" onchange="addPlayerToRole('Rally-Leader', this.value)"><option value="">+ Add Rally Leader...</option></select></div>
+        <div class="form-group">
+            <label>Points / Score marqué</label>
+            <input type="number" id="modal-score" placeholder="Ex: 150000" min="0">
         </div>
 
-        <div class="role-card" id="card-Defender">
-            <div class="role-header">🛡️ Defenders <span class="role-count" id="count-Defender">0</span></div>
-            <div class="assigned-players" id="list-Defender"></div>
-            <div class="add-zone"><select id="select-Defender" onchange="addPlayerToRole('Defender', this.value)"><option value="">+ Add Defender...</option></select></div>
-        </div>
-
-        <div class="role-card" id="card-Support">
-            <div class="role-header">⚡ Support <span class="role-count" id="count-Support">0</span></div>
-            <div class="assigned-players" id="list-Support"></div>
-            <div class="add-zone"><select id="select-Support" onchange="addPlayerToRole('Support', this.value)"><option value="">+ Add Support...</option></select></div>
-        </div>
-
-        <div class="role-card" id="card-Assassin">
-            <div class="role-header">🏹 Assassins <span class="role-count" id="count-Assassin">0</span></div>
-            <div class="assigned-players" id="list-Assassin"></div>
-            <div class="add-zone"><select id="select-Assassin" onchange="addPlayerToRole('Assassin', this.value)"><option value="">+ Add Assassin...</option></select></div>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" onclick="closeModal()">Annuler</button>
+            <button class="btn-modal btn-save" onclick="saveTrackingData()">Sauvegarder</button>
         </div>
     </div>
 </div>
@@ -112,97 +120,127 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const rolesList = ["Commander", "Rally-Leader", "Defender", "Support", "Assassin"];
-    let cachedPlayers = {};
+    const rolesList = ["Commander", "Rally-Leader", "Defenders", "Support", "Assassins"];
+    let allianceDatabase = {};
+    let globalExperience = {};
+    let activePlayerId = null; // Stocke temporairement le joueur en cours d'édition
 
-    function loadData() {
+    function init() {
         db.ref().on('value', snap => {
             const data = snap.val() || {};
-            cachedPlayers = data.alliance_database || {};
-            const globalRoles = data.global_experience || {};
+            allianceDatabase = data.alliance_database || {};
+            globalExperience = data.global_experience || {};
 
-            // 1. Vider les listes et compteurs actuels
-            rolesList.forEach(role => {
-                document.getElementById(`list-${role}`).innerHTML = "";
-                document.getElementById(`count-${role}`).innerText = "0";
+            // 1. Remplir le menu déroulant des joueurs
+            const selectPlayer = document.getElementById('select-player');
+            selectPlayer.innerHTML = '<option value="">Sélectionner un Joueur...</option>';
+            
+            const sortedIds = Object.keys(allianceDatabase).sort((a,b) => 
+                allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
+            );
+
+            sortedIds.forEach(id => {
+                selectPlayer.innerHTML += `<option value="${id}">${allianceDatabase[id].name}</option>`;
             });
 
-            // Objet pour compter le nombre de joueurs par rôle
-            let counts = { "Commander": 0, "Rally-Leader": 0, "Defender": 0, "Support": 0, "Assassin": 0 };
+            // 2. Vider les listes des vignettes
+            rolesList.forEach(role => {
+                document.getElementById(`role-${role}`).innerHTML = '';
+            });
 
-            // 2. Parcourir les rôles stockés dans Firebase et injecter les badges
-            Object.keys(globalRoles).forEach(pId => {
-                const playerRoles = globalRoles[pId] || [];
-                const pName = cachedPlayers[pId]?.name || "Unknown Player";
+            // 3. Remplir les vignettes avec les rôles des joueurs
+            Object.keys(globalExperience).forEach(playerId => {
+                if (!allianceDatabase[playerId]) return; // Sécurité si joueur supprimé de la DB principale
+                const pName = allianceDatabase[playerId].name;
+                const pRoles = globalExperience[playerId] || [];
 
-                playerRoles.forEach(role => {
-                    if (rolesList.includes(role)) {
-                        counts[role]++;
-                        const listContainer = document.getElementById(`list-${role}`);
+                pRoles.forEach(role => {
+                    const listContainer = document.getElementById(`role-${role}`);
+                    if (listContainer) {
                         listContainer.innerHTML += `
-                            <div class="player-badge">
-                                <span>${pName}</span>
-                                <button class="btn-remove" onclick="removePlayerFromRole('${role}', '${pId}')">✕</button>
-                            </div>
+                            <li class="player-item">
+                                <span class="player-name" onclick="openTrackingModal('${playerId}')">👤 ${pName}</span>
+                                <button class="btn-remove" onclick="removeRole('${playerId}', '${role}')">✕</button>
+                            </li>
                         `;
                     }
                 });
             });
-
-            // Mettre à jour les compteurs visuels
-            rolesList.forEach(role => {
-                document.getElementById(`count-${role}`).innerText = counts[role];
-            });
-
-            // 3. Rafraîchir les menus déroulants d'ajout
-            updateSelectMenus(globalRoles);
         });
     }
 
-    function updateSelectMenus(globalRoles) {
-        rolesList.forEach(role => {
-            const select = document.getElementById(`select-${role}`);
-            const cleanRoleName = role.replace(/-/g, ' ');
-            select.innerHTML = `<option value="">+ Add ${cleanRoleName}...</option>`;
+    function addRoleToPlayer() {
+        const pId = document.getElementById('select-player').value;
+        const role = document.getElementById('select-role').value;
+        if (!pId || !role) return;
 
-            // Ajouter uniquement les joueurs qui n'ont pas encore ce rôle précis
-            Object.keys(cachedPlayers).sort((a,b) => cachedPlayers[a].name.localeCompare(cachedPlayers[b].name)).forEach(id => {
-                const pRoles = globalRoles[id] || [];
-                if (!pRoles.includes(role)) {
-                    select.innerHTML += `<option value="${id}">${cachedPlayers[id].name}</option>`;
-                }
-            });
-        });
+        let currentRoles = globalExperience[pId] || [];
+        if (!currentRoles.includes(role)) {
+            currentRoles.push(role);
+            db.ref(`global_experience/${pId}`).set(currentRoles);
+        }
     }
 
-    function addPlayerToRole(role, playerId) {
-        if (!playerId) return;
-        const ref = db.ref(`global_experience/${playerId}`);
+    function removeRole(pId, role) {
+        let currentRoles = globalExperience[pId] || [];
+        const updatedRoles = currentRoles.filter(r => r !== role);
         
-        ref.once('value', snap => {
-            let currentRoles = snap.val() || [];
-            if (!currentRoles.includes(role)) {
-                currentRoles.push(role);
-                ref.set(currentRoles);
-            }
-        });
+        if (updatedRoles.length === 0) {
+            db.ref(`global_experience/${pId}`).remove();
+        } else {
+            db.ref(`global_experience/${pId}`).set(updatedRoles);
+        }
     }
 
-    function removePlayerFromRole(role, playerId) {
-        const ref = db.ref(`global_experience/${playerId}`);
+    // --- LOGIQUE DE LA BOITE DE DIALOGUE (MODALE HISTORIQUE) ---
+
+    function openTrackingModal(playerId) {
+        activePlayerId = playerId;
+        const pName = allianceDatabase[playerId]?.name || "Joueur Inconnu";
         
-        ref.once('value', snap => {
-            let currentRoles = snap.val() || [];
-            currentRoles = currentRoles.filter(r => r !== role);
-            if (currentRoles.length === 0) {
-                ref.remove(); // Nettoie le noeud si le joueur n'a plus aucun rôle
+        // Mettre à jour le titre et vider les champs par défaut
+        document.getElementById('modal-player-title').innerText = `📊 Suivi : ${pName}`;
+        document.getElementById('modal-present').checked = true;
+        document.getElementById('modal-score').value = "";
+        
+        // Afficher la boîte de dialogue
+        document.getElementById('tracking-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('tracking-modal').style.display = 'none';
+        activePlayerId = null;
+    }
+
+    function saveTrackingData() {
+        if (!activePlayerId) return;
+
+        const isPresent = document.getElementById('modal-present').checked;
+        const score = parseInt(document.getElementById('modal-score').value) || 0;
+        
+        // Création d'un timestamp propre et d'une date lisible pour l'historique
+        const now = new Date();
+        const timestamp = now.getTime(); // Sert de clé unique (ID temporel)
+        const dateString = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+
+        const performanceRecord = {
+            date: dateString,
+            present: isPresent,
+            score: score
+        };
+
+        // Sauvegarde dans la table 'player_history/[ID_du_Joueur]/[Timestamp]'
+        db.ref(`player_history/${activePlayerId}/${timestamp}`).set(performanceRecord, (error) => {
+            if (!error) {
+                alert("Données de performance enregistrées avec succès !");
+                closeModal();
             } else {
-                ref.set(currentRoles);
+                alert("Erreur lors de la sauvegarde.");
             }
         });
     }
 
-    loadData();
+    init();
 </script>
 </body>
 </html>
