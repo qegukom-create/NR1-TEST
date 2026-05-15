@@ -55,7 +55,7 @@
         .slot:last-child { margin-bottom: 0; }
         .slot label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
         
-        /* --- CUSTOM MULTISELECT DROPDOWN --- */
+        /* --- CUSTOM MULTISELECT DROPDOWN (PC ONLY) --- */
         .multiselect { position: relative; width: 100%; user-select: none; }
         .select-box { 
             background: #0f172a; color: white; border: 1px solid var(--border); padding: 8px; 
@@ -75,18 +75,30 @@
         
         .dropdown-item { 
             padding: 10px 12px; display: flex; align-items: center; gap: 10px; 
-            color: var(--text); font-size: 0.9rem; cursor: pointer; 
+            color: var(--text); font-size: 0.9rem; cursor: pointer; user-select: none;
         }
         .dropdown-item:hover { background: #334155; }
-        .dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); margin: 0; width: 18px; height: 18px; }
+        .dropdown-item input[type="checkbox"] { pointer-events: none; accent-color: var(--primary); margin: 0; width: 18px; height: 18px; }
 
-        /* --- RESPONSIVE MODAL SYSTEM --- */
-        .building-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 420px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .modal-header { font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; text-transform: uppercase; text-align: center; }
-        .modal-body-scroll { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
+        /* --- RESPONSIVE MODAL SYSTEM (MOBILE) --- */
+        .building-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 95%; max-width: 450px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-header { font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; text-transform: uppercase; text-align: center; }
+        .modal-body-scroll { overflow-y: auto; flex: 1; padding-right: 5px; }
 
-        .btn-close-modal { background: var(--success); color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; font-size: 1rem; }
+        .btn-close-modal { background: var(--success); color: #0f172a; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; font-size: 1rem; }
+
+        /* Mobile specific list layout */
+        .mob-role-title { color: var(--primary); font-size: 0.8rem; text-transform: uppercase; font-weight: bold; margin: 15px 0 8px 0; border-left: 3px solid var(--primary); padding-left: 6px; }
+        .mob-players-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #0f172a; padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
+        
+        .mob-player-btn { 
+            background: #1e293b; border: 1px solid var(--border); color: #94a3b8; 
+            padding: 10px 6px; border-radius: 6px; text-align: center; font-size: 0.8rem; 
+            font-weight: bold; cursor: pointer; transition: 0.1s; user-select: none;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .mob-player-btn.selected { background: rgba(251, 191, 36, 0.15); border-color: var(--primary); color: var(--primary); }
 
         /* Styles PC vs Mobile */
         @media (max-width: 900px) {
@@ -126,7 +138,7 @@
 </div>
 
 <div class="building-modal" id="b-modal">
-    <div class="modal-content" onclick="event.stopPropagation();">
+    <div class="modal-content">
         <div class="modal-header" id="modal-b-name">Bâtiment</div>
         <div class="modal-body-scroll" id="modal-slots-container"></div>
         <button class="btn-close-modal" onclick="closeBuildingModal()">✅ OK / Fermer</button>
@@ -146,7 +158,6 @@
     let currentLegion = 'legion1';
     let allianceDatabase = {};
     let globalExperience = {};
-    let activeDropdown = null;
 
     const mapLayout = {
         "1-2": { id: "Belltower", name: "Bell Tower" },
@@ -154,10 +165,10 @@
         "2-1": { id: "Northwest-Sanctum", name: "Northwest Sanctum" },
         "2-3": { id: "Mercenary-Camp", name: "Mercenary Camp" },
         "2-5": { id: "Abbey-2", name: "Abbey 2" },
-        "3-1": { id: "Abbey-3", name: "Abbey 3" },
+        "4-1": { id: "Abbey-3", name: "Abbey 3" },
         "3-3": { id: "Swordshrine", name: "Swordshrine" },
         "3-5": { id: "Southeast-Sanctum", name: "Southeast Sanctum" },
-        "4-1": { id: "Abbey-4", name: "Abbey 4" }, 
+        "3-1": { id: "Abbey-4", name: "Abbey 4" }, 
         "4-3": { id: "Hall-of-Reformation", name: "Hall of Reformation" },
         "4-5": { id: "Stables", name: "Stables" } 
     };
@@ -170,7 +181,6 @@
 
     function closeAllDropdowns() {
         document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-        activeDropdown = null;
     }
 
     function toggleDropdown(id, event) {
@@ -179,39 +189,67 @@
         const el = document.getElementById(id);
         const willShow = !el.classList.contains('show');
         closeAllDropdowns();
-        if (willShow) {
-            el.classList.add('show');
-            activeDropdown = el;
-        }
+        if (willShow) el.classList.add('show');
     }
 
-    function toggleMobileDropdown(id, event) {
-        event.stopPropagation();
-        const el = document.getElementById(id);
-        if (el) {
-            el.classList.toggle('show');
-        }
-    }
-
-    function generateCheckboxItems(buildingId, role, pList, isMobile = false) {
+    function generateCheckboxItems(buildingId, role, pList) {
         let html = '';
-        const prefix = isMobile ? 'mob' : 'pc';
-        
         pList.forEach(p => {
             html += `
-                <label class="dropdown-item" onclick="event.stopPropagation();">
-                    <input type="checkbox" 
-                           id="${prefix}-chk-${buildingId}-${role}-${p.id}" 
-                           data-building="${buildingId}" 
-                           data-role="${role}" 
-                           data-playerid="${p.id}" 
-                           onclick="event.stopPropagation();"
-                           onchange="handleCheckboxChange('${buildingId}', '${role}', '${p.id}', this.checked, ${isMobile})">
+                <div class="dropdown-item" onclick="toggleItemSelection('${buildingId}', '${role}', '${p.id}', event)">
+                    <input type="checkbox" id="pc-chk-${buildingId}-${role}-${p.id}" data-building="${buildingId}" data-role="${role}" data-playerid="${p.id}">
                     <span>${p.name}</span>
-                </label>
+                </div>
             `;
         });
         return html;
+    }
+
+    function generateMobileButtons(buildingId, role, pList) {
+        let html = '';
+        pList.forEach(p => {
+            html += `
+                <div class="mob-player-btn" id="mob-btn-${buildingId}-${role}-${p.id}" onclick="toggleMobileSelection('${buildingId}', '${role}', '${p.id}')">
+                    ${p.name}
+                </div>
+            `;
+        });
+        return html;
+    }
+
+    function toggleItemSelection(buildingId, role, playerId, event) {
+        if(event) event.stopPropagation();
+        const chk = document.getElementById(`pc-chk-${buildingId}-${role}-${playerId}`);
+        if (!chk) return;
+
+        const newStatus = !chk.checked;
+        chk.checked = newStatus;
+
+        db.ref(`swordland_tactical/${currentLegion}/${buildingId}/${role}/${playerId}`).set(newStatus ? true : null);
+        updateBoxLabel(buildingId, role);
+    }
+
+    function toggleMobileSelection(buildingId, role, playerId) {
+        const btn = document.getElementById(`mob-btn-${buildingId}-${role}-${playerId}`);
+        const pcChk = document.getElementById(`pc-chk-${buildingId}-${role}-${playerId}`);
+        
+        if (!btn || !pcChk) return;
+
+        const newStatus = !btn.classList.contains('selected');
+        
+        // Màj Visuelle Mobile immédiate
+        if(newStatus) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+
+        // Màj Miroir PC lié
+        pcChk.checked = newStatus;
+
+        // Sync Firebase
+        db.ref(`swordland_tactical/${currentLegion}/${buildingId}/${role}/${playerId}`).set(newStatus ? true : null);
+        updateBoxLabel(buildingId, role);
     }
 
     function buildGridHTML() {
@@ -251,7 +289,7 @@
                                 <div class="multiselect">
                                     <div class="select-box" id="pc-box-${b.id}-commander" onclick="toggleDropdown('pc-drop-${b.id}-commander', event)">Unassigned</div>
                                     <div class="dropdown-content" id="pc-drop-${b.id}-commander">
-                                        ${generateCheckboxItems(b.id, 'commander', lists.commander, false)}
+                                        ${generateCheckboxItems(b.id, 'commander', lists.commander)}
                                     </div>
                                 </div>
                             </div>
@@ -261,7 +299,7 @@
                                 <div class="multiselect">
                                     <div class="select-box" id="pc-box-${b.id}-rally1" onclick="toggleDropdown('pc-drop-${b.id}-rally1', event)">Unassigned</div>
                                     <div class="dropdown-content" id="pc-drop-${b.id}-rally1">
-                                        ${generateCheckboxItems(b.id, 'rally1', lists.rally1, false)}
+                                        ${generateCheckboxItems(b.id, 'rally1', lists.rally1)}
                                     </div>
                                 </div>
                             </div>
@@ -271,7 +309,7 @@
                                 <div class="multiselect">
                                     <div class="select-box" id="pc-box-${b.id}-rally2" onclick="toggleDropdown('pc-drop-${b.id}-rally2', event)">Unassigned</div>
                                     <div class="dropdown-content" id="pc-drop-${b.id}-rally2">
-                                        ${generateCheckboxItems(b.id, 'rally2', lists.rally2, false)}
+                                        ${generateCheckboxItems(b.id, 'rally2', lists.rally2)}
                                     </div>
                                 </div>
                             </div>
@@ -281,7 +319,7 @@
                                 <div class="multiselect">
                                     <div class="select-box" id="pc-box-${b.id}-garrison" onclick="toggleDropdown('pc-drop-${b.id}-garrison', event)">Unassigned</div>
                                     <div class="dropdown-content" id="pc-drop-${b.id}-garrison">
-                                        ${generateCheckboxItems(b.id, 'garrison', lists.garrison, false)}
+                                        ${generateCheckboxItems(b.id, 'garrison', lists.garrison)}
                                     </div>
                                 </div>
                             </div>
@@ -292,16 +330,6 @@
                 }
             }
         }
-    }
-
-    function handleCheckboxChange(buildingId, role, playerId, isChecked, isMobileTrigger) {
-        const mirrorPrefix = isMobileTrigger ? 'pc' : 'mob';
-        const mirrorCheckbox = document.getElementById(`${mirrorPrefix}-chk-${buildingId}-${role}-${playerId}`);
-        if (mirrorCheckbox) mirrorCheckbox.checked = isChecked;
-
-        db.ref(`swordland_tactical/${currentLegion}/${buildingId}/${role}/${playerId}`).set(isChecked ? true : null);
-        
-        updateBoxLabel(buildingId, role);
     }
 
     function updateBoxLabel(buildingId, role) {
@@ -317,9 +345,6 @@
 
         const pcBox = document.getElementById(`pc-box-${buildingId}-${role}`);
         if (pcBox) pcBox.innerText = txt;
-
-        const mobBox = document.getElementById(`mob-box-${buildingId}-${role}`);
-        if (mobBox) mobBox.innerText = txt;
     }
 
     function openBuildingModal(buildingId, buildingName) {
@@ -329,52 +354,36 @@
         const container = document.getElementById('modal-slots-container');
         
         container.innerHTML = `
-            <div class="slot" style="display:block; margin-bottom:15px;" onclick="event.stopPropagation();">
-                <label style="font-size:0.8rem;">👑 Commander</label>
-                <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-commander" onclick="toggleMobileDropdown('mob-drop-${buildingId}-commander', event)">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-commander" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
-                        ${generateCheckboxItems(buildingId, 'commander', window.cachedLists.commander, true)}
-                    </div>
-                </div>
+            <div class="mob-role-title">👑 Commander</div>
+            <div class="mob-players-list">
+                ${generateMobileButtons(buildingId, 'commander', window.cachedLists.commander)}
             </div>
-            <div class="slot" style="display:block; margin-bottom:15px;" onclick="event.stopPropagation();">
-                <label style="font-size:0.8rem;">⚔️ Rally 1 (RL / Assassin)</label>
-                <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-rally1" onclick="toggleMobileDropdown('mob-drop-${buildingId}-rally1', event)">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally1" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
-                        ${generateCheckboxItems(buildingId, 'rally1', window.cachedLists.rally1, true)}
-                    </div>
-                </div>
+            
+            <div class="mob-role-title">⚔️ Rally 1 (RL / Assassin)</div>
+            <div class="mob-players-list">
+                ${generateMobileButtons(buildingId, 'rally1', window.cachedLists.rally1)}
             </div>
-            <div class="slot" style="display:block; margin-bottom:15px;" onclick="event.stopPropagation();">
-                <label style="font-size:0.8rem;">⚔️ Rally 2 (RL / Assassin)</label>
-                <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-rally2" onclick="toggleMobileDropdown('mob-drop-${buildingId}-rally2', event)">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally2" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
-                        ${generateCheckboxItems(buildingId, 'rally2', window.cachedLists.rally2, true)}
-                    </div>
-                </div>
+            
+            <div class="mob-role-title">⚔️ Rally 2 (RL / Assassin)</div>
+            <div class="mob-players-list">
+                ${generateMobileButtons(buildingId, 'rally2', window.cachedLists.rally2)}
             </div>
-            <div class="slot" style="display:block; margin-bottom:5px;" onclick="event.stopPropagation();">
-                <label style="font-size:0.8rem;">🛡️ Garrison (Def / Support)</label>
-                <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-garrison" onclick="toggleMobileDropdown('mob-drop-${buildingId}-garrison', event)">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-garrison" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
-                        ${generateCheckboxItems(buildingId, 'garrison', window.cachedLists.garrison, true)}
-                    </div>
-                </div>
+            
+            <div class="mob-role-title">🛡️ Garrison (Def / Support)</div>
+            <div class="mob-players-list">
+                ${generateMobileButtons(buildingId, 'garrison', window.cachedLists.garrison)}
             </div>
         `;
 
+        // Appliquer la classe .selected sur les boutons mobiles si cochés sur PC
         document.querySelectorAll(`[id^="pc-chk-${buildingId}-"]`).forEach(pcChk => {
-            const role = pcChk.getAttribute('data-role');
-            const pId = pcChk.getAttribute('data-playerid');
-            const mobChk = document.getElementById(`mob-chk-${buildingId}-${role}-${pId}`);
-            if (mobChk) mobChk.checked = pcChk.checked;
+            if (pcChk.checked) {
+                const role = pcChk.getAttribute('data-role');
+                const pId = pcChk.getAttribute('data-playerid');
+                const btn = document.getElementById(`mob-btn-${buildingId}-${role}-${pId}`);
+                if (btn) btn.classList.add('selected');
+            }
         });
-
-        ['commander', 'rally1', 'rally2', 'garrison'].forEach(r => updateBoxLabel(buildingId, r));
 
         document.getElementById('b-modal').style.display = 'flex';
     }
