@@ -74,11 +74,11 @@
         .dropdown-content.show { display: block; }
         
         .dropdown-item { 
-            padding: 6px 10px; display: flex; align-items: center; gap: 8px; 
-            color: var(--text); font-size: 0.85rem; cursor: pointer; 
+            padding: 10px 12px; display: flex; align-items: center; gap: 10px; 
+            color: var(--text); font-size: 0.9rem; cursor: pointer; 
         }
         .dropdown-item:hover { background: #334155; }
-        .dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); margin: 0; }
+        .dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); margin: 0; width: 18px; height: 18px; }
 
         /* --- RESPONSIVE MODAL SYSTEM --- */
         .building-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 2000; }
@@ -126,7 +126,7 @@
 </div>
 
 <div class="building-modal" id="b-modal">
-    <div class="modal-content">
+    <div class="modal-content" onclick="event.stopPropagation();">
         <div class="modal-header" id="modal-b-name">Bâtiment</div>
         <div class="modal-body-scroll" id="modal-slots-container"></div>
         <button class="btn-close-modal" onclick="closeBuildingModal()">✅ OK / Fermer</button>
@@ -154,15 +154,14 @@
         "2-1": { id: "Northwest-Sanctum", name: "Northwest Sanctum" },
         "2-3": { id: "Mercenary-Camp", name: "Mercenary Camp" },
         "2-5": { id: "Abbey-2", name: "Abbey 2" },
-        "4-1": { id: "Abbey-3", name: "Abbey 3" },
+        "3-1": { id: "Abbey-3", name: "Abbey 3" },
         "3-3": { id: "Swordshrine", name: "Swordshrine" },
         "3-5": { id: "Southeast-Sanctum", name: "Southeast Sanctum" },
-        "3-1": { id: "Abbey-4", name: "Abbey 4" }, 
+        "4-1": { id: "Abbey-4", name: "Abbey 4" }, 
         "4-3": { id: "Hall-of-Reformation", name: "Hall of Reformation" },
         "4-5": { id: "Stables", name: "Stables" } 
     };
 
-    // Fermer les menus déroulants si on clique à côté
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.multiselect')) {
             closeAllDropdowns();
@@ -175,7 +174,7 @@
     }
 
     function toggleDropdown(id, event) {
-        if (window.innerWidth <= 900) return; // Empêcher le déploiement sur PC lors du clic mobile involontaire
+        if (window.innerWidth <= 900) return; 
         event.stopPropagation();
         const el = document.getElementById(id);
         const willShow = !el.classList.contains('show');
@@ -183,6 +182,14 @@
         if (willShow) {
             el.classList.add('show');
             activeDropdown = el;
+        }
+    }
+
+    function toggleMobileDropdown(id, event) {
+        event.stopPropagation();
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.toggle('show');
         }
     }
 
@@ -198,6 +205,7 @@
                            data-building="${buildingId}" 
                            data-role="${role}" 
                            data-playerid="${p.id}" 
+                           onclick="event.stopPropagation();"
                            onchange="handleCheckboxChange('${buildingId}', '${role}', '${p.id}', this.checked, ${isMobile})">
                     <span>${p.name}</span>
                 </label>
@@ -226,7 +234,7 @@
             if (pRoles.includes("Defenders") || pRoles.includes("Support")) lists.garrison.push(pObj);
         });
 
-        window.cachedLists = lists; // Garder en mémoire pour la modale mobile
+        window.cachedLists = lists; 
 
         for (let row = 1; row <= 5; row++) {
             for (let col = 1; col <= 5; col++) {
@@ -287,20 +295,16 @@
     }
 
     function handleCheckboxChange(buildingId, role, playerId, isChecked, isMobileTrigger) {
-        // Synchroniser visuellement PC <=> Mobile en direct
         const mirrorPrefix = isMobileTrigger ? 'pc' : 'mob';
         const mirrorCheckbox = document.getElementById(`${mirrorPrefix}-chk-${buildingId}-${role}-${playerId}`);
         if (mirrorCheckbox) mirrorCheckbox.checked = isChecked;
 
-        // Sauvegarder l'état dans Firebase pour ce joueur précis
         db.ref(`swordland_tactical/${currentLegion}/${buildingId}/${role}/${playerId}`).set(isChecked ? true : null);
         
-        // Mettre à jour immédiatement les labels de comptage localement
         updateBoxLabel(buildingId, role);
     }
 
     function updateBoxLabel(buildingId, role) {
-        // On compte les cases cochées sur la version PC
         const checkedBoxes = document.querySelectorAll(`[id^="pc-chk-${buildingId}-${role}-"]:checked`);
         const count = checkedBoxes.length;
         
@@ -311,11 +315,9 @@
             txt = `${count} Selected`;
         }
 
-        // Met à jour l'affichage sur PC
         const pcBox = document.getElementById(`pc-box-${buildingId}-${role}`);
         if (pcBox) pcBox.innerText = txt;
 
-        // Met à jour l'affichage sur Mobile si la modale est ouverte
         const mobBox = document.getElementById(`mob-box-${buildingId}-${role}`);
         if (mobBox) mobBox.innerText = txt;
     }
@@ -326,47 +328,45 @@
         document.getElementById('modal-b-name').innerText = `📍 ${buildingName}`;
         const container = document.getElementById('modal-slots-container');
         
-        // Génération de l'interface mobile (les listes déroulantes restent ouvertes nativement dans la modale)
         container.innerHTML = `
-            <div class="slot" style="display:block; margin-bottom:15px;">
+            <div class="slot" style="display:block; margin-bottom:15px;" onclick="event.stopPropagation();">
                 <label style="font-size:0.8rem;">👑 Commander</label>
                 <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-commander" onclick="document.getElementById('mob-drop-${buildingId}-commander').classList.toggle('show')">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-commander" style="position:static; display:none; max-height:140px;">
+                    <div class="select-box" id="mob-box-${buildingId}-commander" onclick="toggleMobileDropdown('mob-drop-${buildingId}-commander', event)">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-commander" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
                         ${generateCheckboxItems(buildingId, 'commander', window.cachedLists.commander, true)}
                     </div>
                 </div>
             </div>
-            <div class="slot" style="display:block; margin-bottom:15px;">
+            <div class="slot" style="display:block; margin-bottom:15px;" onclick="event.stopPropagation();">
                 <label style="font-size:0.8rem;">⚔️ Rally 1 (RL / Assassin)</label>
                 <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-rally1" onclick="document.getElementById('mob-drop-${buildingId}-rally1').classList.toggle('show')">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally1" style="position:static; display:none; max-height:140px;">
+                    <div class="select-box" id="mob-box-${buildingId}-rally1" onclick="toggleMobileDropdown('mob-drop-${buildingId}-rally1', event)">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally1" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
                         ${generateCheckboxItems(buildingId, 'rally1', window.cachedLists.rally1, true)}
                     </div>
                 </div>
             </div>
-            <div class="slot" style="display:block; margin-bottom:15px;">
+            <div class="slot" style="display:block; margin-bottom:15px;" onclick="event.stopPropagation();">
                 <label style="font-size:0.8rem;">⚔️ Rally 2 (RL / Assassin)</label>
                 <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-rally2" onclick="document.getElementById('mob-drop-${buildingId}-rally2').classList.toggle('show')">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally2" style="position:static; display:none; max-height:140px;">
+                    <div class="select-box" id="mob-box-${buildingId}-rally2" onclick="toggleMobileDropdown('mob-drop-${buildingId}-rally2', event)">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally2" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
                         ${generateCheckboxItems(buildingId, 'rally2', window.cachedLists.rally2, true)}
                     </div>
                 </div>
             </div>
-            <div class="slot" style="display:block; margin-bottom:5px;">
+            <div class="slot" style="display:block; margin-bottom:5px;" onclick="event.stopPropagation();">
                 <label style="font-size:0.8rem;">🛡️ Garrison (Def / Support)</label>
                 <div class="multiselect" style="margin-top:5px;">
-                    <div class="select-box" id="mob-box-${buildingId}-garrison" onclick="document.getElementById('mob-drop-${buildingId}-garrison').classList.toggle('show')">Unassigned</div>
-                    <div class="dropdown-content" id="mob-drop-${buildingId}-garrison" style="position:static; display:none; max-height:140px;">
+                    <div class="select-box" id="mob-box-${buildingId}-garrison" onclick="toggleMobileDropdown('mob-drop-${buildingId}-garrison', event)">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-garrison" style="position:static; display:none; max-height:140px;" onclick="event.stopPropagation();">
                         ${generateCheckboxItems(buildingId, 'garrison', window.cachedLists.garrison, true)}
                     </div>
                 </div>
             </div>
         `;
 
-        // Reporter l'état des cases cochées PC vers Mobile dans la modale
         document.querySelectorAll(`[id^="pc-chk-${buildingId}-"]`).forEach(pcChk => {
             const role = pcChk.getAttribute('data-role');
             const pId = pcChk.getAttribute('data-playerid');
@@ -374,7 +374,6 @@
             if (mobChk) mobChk.checked = pcChk.checked;
         });
 
-        // Forcer la mise à jour des en-têtes de boutons mobiles
         ['commander', 'rally1', 'rally2', 'garrison'].forEach(r => updateBoxLabel(buildingId, r));
 
         document.getElementById('b-modal').style.display = 'flex';
@@ -406,25 +405,22 @@
         db.ref(`swordland_tactical/${currentLegion}`).once('value', snap => {
             const data = snap.val() || {};
             
-            // Tout décocher par défaut avant le chargement
             document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
 
             Object.keys(data).forEach(buildingId => {
                 const roles = data[buildingId];
                 Object.keys(roles).forEach(role => {
-                    const playersObj = roles[role]; // Structure: { playerId1: true, playerId2: true }
+                    const playersObj = roles[role]; 
                     if (playersObj && typeof playersObj === 'object') {
                         Object.keys(playersObj).forEach(pId => {
                             const pcChk = document.getElementById(`pc-chk-${buildingId}-${role}-${pId}`);
                             if (pcChk) pcChk.checked = true;
                         });
                     }
-                    // Mettre à jour l'en-tête du sélecteur textuel
                     updateBoxLabel(buildingId, role);
                 });
             });
             
-            // Pour les bâtiments vides non présents dans la DB, reset le texte à "Unassigned"
             Object.values(mapLayout).forEach(b => {
                 if (!data[b.id]) {
                     ['commander', 'rally1', 'rally2', 'garrison'].forEach(r => updateBoxLabel(b.id, r));
