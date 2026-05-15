@@ -12,12 +12,11 @@
             --text: #f8fafc; --border: #334155;
         }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1300px; margin: auto; }
+        .container { max-width: 1400px; margin: auto; }
         
         /* Header Layout */
         .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         .header-title h1 { color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 1.8rem; }
-        .header-title p { margin: 5px 0 0 0; color: #94a3b8; font-size: 0.95rem; }
         
         .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
         .btn-nav:hover { background: rgba(251, 191, 36, 0.1); }
@@ -106,8 +105,10 @@
         const gridContainer = document.getElementById('map-grid');
         gridContainer.innerHTML = '';
 
+        // Préparation des groupes d'options filtrés
         let commandersOptions = '<option value="">Unassigned</option>';
-        let rallyLeadersOptions = '<option value="">Unassigned</option>';
+        let offenseOptions = '<option value="">Unassigned</option>'; // Contient Rally Leaders et Assassins
+        let defenseOptions = '<option value="">Unassigned</option>'; // Contient Defenders et Support
 
         const sortedPlayerIds = Object.keys(allianceDatabase).sort((a,b) => 
             allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
@@ -116,8 +117,21 @@
         sortedPlayerIds.forEach(id => {
             const pName = allianceDatabase[id].name;
             const pRoles = globalExperience[id] || [];
-            if (pRoles.includes("Commander")) commandersOptions += `<option value="${id}">${pName}</option>`;
-            if (pRoles.includes("Rally-Leader")) rallyLeadersOptions += `<option value="${id}">${pName}</option>`;
+            
+            // 1. Filtrage Commandants
+            if (pRoles.includes("Commander")) {
+                commandersOptions += `<option value="${id}">${pName}</option>`;
+            }
+            
+            // 2. Filtrage Offensif (Rally Leaders + Assassins)
+            if (pRoles.includes("Rally-Leader") || pRoles.includes("Assassins")) {
+                offenseOptions += `<option value="${id}">${pName}</option>`;
+            }
+
+            // 3. Filtrage Défensif / Logistique (Defenders + Support)
+            if (pRoles.includes("Defenders") || pRoles.includes("Support")) {
+                defenseOptions += `<option value="${id}">${pName}</option>`;
+            }
         });
 
         for (let row = 1; row <= 5; row++) {
@@ -129,22 +143,32 @@
                     gridContainer.innerHTML += `
                         <div class="building-box">
                             <span class="building-name">${b.name}</span>
+                            
                             <div class="slot">
                                 <label>👑 Commander</label>
                                 <select data-building="${b.id}" data-role="commander" onchange="saveAssignment('${b.id}', 'commander', this.value)">
                                     ${commandersOptions}
                                 </select>
                             </div>
+                            
                             <div class="slot">
-                                <label>⚔️ Rally 1</label>
+                                <label>⚔️ Rally 1 (RL / Assassin)</label>
                                 <select data-building="${b.id}" data-role="rl1" onchange="saveAssignment('${b.id}', 'rl1', this.value)">
-                                    ${rallyLeadersOptions}
+                                    ${offenseOptions}
                                 </select>
                             </div>
+                            
                             <div class="slot">
-                                <label>⚔️ Rally 2</label>
+                                <label>⚔️ Rally 2 (RL / Assassin)</label>
                                 <select data-building="${b.id}" data-role="rl2" onchange="saveAssignment('${b.id}', 'rl2', this.value)">
-                                    ${rallyLeadersOptions}
+                                    ${offenseOptions}
+                                </select>
+                            </div>
+
+                            <div class="slot">
+                                <label>🛡️ Garrison (Def / Support)</label>
+                                <select data-building="${b.id}" data-role="garrison" onchange="saveAssignment('${b.id}', 'garrison', this.value)">
+                                    ${defenseOptions}
                                 </select>
                             </div>
                         </div>
