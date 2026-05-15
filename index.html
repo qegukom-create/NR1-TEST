@@ -23,23 +23,36 @@
 
         /* Legion Tabs */
         .legion-tabs { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
-        .tab-btn { background: #1e293b; border: 2px solid var(--border); color: #94a3b8; padding: 12px 40px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .tab-btn { background: #1e293b; border: 2px solid var(--border); color: #94a3b8; padding: 12px 20px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
         .tab-btn.active { border-color: var(--primary); color: var(--primary); background: rgba(251, 191, 36, 0.05); box-shadow: 0 0 15px rgba(251, 191, 36, 0.1); }
 
-        /* Tactical Grid 5x5 */
+        /* --- TACTICAL MAP RESPONSIVE GRID --- */
         .tactical-map { 
             display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            grid-template-rows: repeat(5, auto); 
+            grid-template-columns: 1fr; /* 1 seule colonne par défaut (Mobile) */
             gap: 15px; 
             background: #0b111e; 
-            padding: 20px; 
+            padding: 15px; 
             border-radius: 16px; 
             border: 1px solid var(--border);
         }
         
-        /* Grid Items - Hidden but preserving space */
-        .grid-cell { visibility: hidden; min-height: 120px; }
+        /* Sur mobile, on cache COMPLÈTEMENT les cellules vides pour éviter les trous noirs */
+        .grid-cell { display: none; min-height: 120px; }
+
+        /* Dès qu'on passe sur une tablette ou un PC (écran supérieur à 900px) */
+        @media (min-width: 900px) {
+            .tactical-map { 
+                grid-template-columns: repeat(5, 1fr); /* Retour au format 5x5 original */
+                grid-template-rows: repeat(5, auto); 
+                padding: 20px;
+            }
+            .grid-cell { 
+                display: block; /* On réaffiche les blocs */
+                visibility: hidden; /* Tout en les laissant invisibles pour garder la structure */
+            }
+        }
+        /* ------------------------------------ */
         
         .building-box { 
             background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
@@ -53,8 +66,15 @@
         .slot:last-child { margin-bottom: 0; }
         .slot label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
         
-        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 5px; border-radius: 5px; font-size: 0.8rem; outline: none; width: 100%; cursor: pointer; }
+        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 8px; border-radius: 5px; font-size: 0.85rem; outline: none; width: 100%; cursor: pointer; }
         select:hover { border-color: var(--primary); }
+
+        /* Ajustements mineurs pour le header sur Mobile */
+        @media (max-width: 600px) {
+            .header-area { flex-direction: column; gap: 15px; text-align: center; }
+            .legion-tabs { flex-direction: column; width: 100%; gap: 10px; }
+            .tab-btn { padding: 12px; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -105,10 +125,9 @@
         const gridContainer = document.getElementById('map-grid');
         gridContainer.innerHTML = '';
 
-        // Préparation des groupes d'options filtrés
         let commandersOptions = '<option value="">Unassigned</option>';
-        let offenseOptions = '<option value="">Unassigned</option>'; // Contient Rally Leaders et Assassins
-        let defenseOptions = '<option value="">Unassigned</option>'; // Contient Defenders et Support
+        let offenseOptions = '<option value="">Unassigned</option>';
+        let defenseOptions = '<option value="">Unassigned</option>';
 
         const sortedPlayerIds = Object.keys(allianceDatabase).sort((a,b) => 
             allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
@@ -118,17 +137,12 @@
             const pName = allianceDatabase[id].name;
             const pRoles = globalExperience[id] || [];
             
-            // 1. Filtrage Commandants
             if (pRoles.includes("Commander")) {
                 commandersOptions += `<option value="${id}">${pName}</option>`;
             }
-            
-            // 2. Filtrage Offensif (Rally Leaders + Assassins)
             if (pRoles.includes("Rally-Leader") || pRoles.includes("Assassins")) {
                 offenseOptions += `<option value="${id}">${pName}</option>`;
             }
-
-            // 3. Filtrage Défensif / Logistique (Defenders + Support)
             if (pRoles.includes("Defenders") || pRoles.includes("Support")) {
                 defenseOptions += `<option value="${id}">${pName}</option>`;
             }
