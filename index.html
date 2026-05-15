@@ -74,13 +74,12 @@
             
             /* Sur mobile, on cache les formulaires directement dans la grille */
             .building-box .slot { display: none; }
-            .building-box { padding: 8px 4px; min-height: 55px; justify-content: center; }
+            .building-box { padding: 8px 4px; min-height: 60px; justify-content: center; }
             .building-name { margin-bottom: 0; border-bottom: none; padding-bottom: 0; font-size: 0.65rem; letter-spacing: 0px; }
-            .grid-cell { min-height: 55px; }
+            .grid-cell { min-height: 60px; }
         }
 
         @media (min-width: 901px) {
-            /* Bloquer l'ouverture de la modale sur PC car tout est déjà affiché */
             .building-box { cursor: default; transform: none !important; }
         }
     </style>
@@ -125,16 +124,19 @@
     let allianceDatabase = {};
     let globalExperience = {};
 
+    // Liste complète et mise à jour des coordonnées
     const mapLayout = {
         "1-2": { id: "Belltower", name: "Bell Tower" },
         "1-4": { id: "Abbey-1", name: "Abbey 1" },
-        "2-3": { id: "Mercenary-Camp", name: "Mercenary Camp" },
         "2-1": { id: "Northwest-Sanctum", name: "Northwest Sanctum" },
-        "3-3": { id: "Swordshrine", name: "Swordshrine" },
+        "2-3": { id: "Mercenary-Camp", name: "Mercenary Camp" },
         "2-5": { id: "Abbey-2", name: "Abbey 2" },
-        "4-3": { id: "Hall-of-Reformation", name: "Hall of Reformation" },
         "3-1": { id: "Abbey-3", name: "Abbey 3" },
-        "3-5": { id: "Southeast-Sanctum", name: "Southeast Sanctum" }
+        "3-3": { id: "Swordshrine", name: "Swordshrine" },
+        "3-5": { id: "Southeast-Sanctum", name: "Southeast Sanctum" },
+        "4-1": { id: "Abbey-4", name: "Abbey 4" }, // Placé sous Abbey 3
+        "4-3": { id: "Hall-of-Reformation", name: "Hall of Reformation" },
+        "4-5": { id: "Stables", name: "Stables" } // Placé sous Southeast Sanctum
     };
 
     function buildGridHTML() {
@@ -203,19 +205,16 @@
             }
         }
         
-        // Stocker les structures HTML des options pour la modale mobile
         window.optComm = commandersOptions;
         window.optOff = offenseOptions;
         window.optDef = defenseOptions;
     }
 
-    /* --- LOGIQUE DE LA MODALE SUR MOBILE --- */
     function openBuildingModal(buildingId, buildingName) {
-        if (window.innerWidth > 900) return; // Désactivé sur PC
+        if (window.innerWidth > 900) return;
 
         document.getElementById('modal-b-name').innerText = `📍 ${buildingName}`;
         
-        // Récupérer les valeurs actuellement sélectionnées sur la page principale pour les dupliquer dans la modale
         const currentComm = document.getElementById(`pc-${buildingId}-commander`).value;
         const currentRl1 = document.getElementById(`pc-${buildingId}-rl1`).value;
         const currentRl2 = document.getElementById(`pc-${buildingId}-rl2`).value;
@@ -252,7 +251,6 @@
             </div>
         `;
 
-        // Assigner les valeurs sauvegardées aux selects de la modale
         document.getElementById(`mob-${buildingId}-commander`).value = currentComm;
         document.getElementById(`mob-${buildingId}-rl1`).value = currentRl1;
         document.getElementById(`mob-${buildingId}-rl2`).value = currentRl2;
@@ -266,9 +264,7 @@
     }
 
     function syncAndSave(buildingId, role, value) {
-        // Synchronise le select caché en arrière-plan (version PC) pour que le rafraîchissement Firebase fonctionne
         document.getElementById(`pc-${buildingId}-${role}`).value = value;
-        // Sauvegarde dans Firebase
         saveAssignment(buildingId, role, value);
     }
 
