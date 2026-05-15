@@ -17,13 +17,13 @@
         /* Header */
         .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         .header-title h1 { color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 1.8rem; }
-        .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+        .btn-nav { background: #0f172a; color: var(--primary); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: 0.2s; white-space: nowrap; }
         .btn-nav:hover { background: rgba(251, 191, 36, 0.1); }
 
         /* Setup Area */
         .setup-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
-        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; }
-        .btn-add { background: var(--primary); color: #0f172a; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; width: 100%; }
+        .btn-add { background: var(--primary); color: #0f172a; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-add:hover { background: #f59e0b; }
 
         /* Grid Vignettes */
@@ -53,6 +53,20 @@
         .btn-modal { padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; font-size: 0.9rem; }
         .btn-cancel { background: #334155; color: white; }
         .btn-save { background: var(--success); color: #0f172a; }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header-area { flex-direction: column; gap: 15px; text-align: center; }
+            .header-title h1 { font-size: 1.5rem; }
+            .btn-nav { width: 100%; text-align: center; box-sizing: border-box; }
+            
+            /* Empilement vertical de la barre d'outils */
+            .setup-box { flex-direction: column; gap: 12px; padding: 12px; }
+            
+            /* Grille forcée à une colonne sur les écrans très étroits */
+            .roles-grid { grid-template-columns: 1fr; gap: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -123,7 +137,7 @@
     const rolesList = ["Commander", "Rally-Leader", "Defenders", "Support", "Assassins"];
     let allianceDatabase = {};
     let globalExperience = {};
-    let activePlayerId = null; // Stocke temporairement le joueur en cours d'édition
+    let activePlayerId = null;
 
     function init() {
         db.ref().on('value', snap => {
@@ -131,7 +145,6 @@
             allianceDatabase = data.alliance_database || {};
             globalExperience = data.global_experience || {};
 
-            // 1. Remplir le menu déroulant des joueurs
             const selectPlayer = document.getElementById('select-player');
             selectPlayer.innerHTML = '<option value="">Sélectionner un Joueur...</option>';
             
@@ -143,14 +156,12 @@
                 selectPlayer.innerHTML += `<option value="${id}">${allianceDatabase[id].name}</option>`;
             });
 
-            // 2. Vider les listes des vignettes
             rolesList.forEach(role => {
                 document.getElementById(`role-${role}`).innerHTML = '';
             });
 
-            // 3. Remplir les vignettes avec les rôles des joueurs
             Object.keys(globalExperience).forEach(playerId => {
-                if (!allianceDatabase[playerId]) return; // Sécurité si joueur supprimé de la DB principale
+                if (!allianceDatabase[playerId]) return;
                 const pName = allianceDatabase[playerId].name;
                 const pRoles = globalExperience[playerId] || [];
 
@@ -192,18 +203,14 @@
         }
     }
 
-    // --- LOGIQUE DE LA BOITE DE DIALOGUE (MODALE HISTORIQUE) ---
-
     function openTrackingModal(playerId) {
         activePlayerId = playerId;
         const pName = allianceDatabase[playerId]?.name || "Joueur Inconnu";
         
-        // Mettre à jour le titre et vider les champs par défaut
         document.getElementById('modal-player-title').innerText = `📊 Suivi : ${pName}`;
         document.getElementById('modal-present').checked = true;
         document.getElementById('modal-score').value = "";
         
-        // Afficher la boîte de dialogue
         document.getElementById('tracking-modal').style.display = 'flex';
     }
 
@@ -218,9 +225,8 @@
         const isPresent = document.getElementById('modal-present').checked;
         const score = parseInt(document.getElementById('modal-score').value) || 0;
         
-        // Création d'un timestamp propre et d'une date lisible pour l'historique
         const now = new Date();
-        const timestamp = now.getTime(); // Sert de clé unique (ID temporel)
+        const timestamp = now.getTime();
         const dateString = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
         const performanceRecord = {
@@ -229,7 +235,6 @@
             score: score
         };
 
-        // Sauvegarde dans la table 'player_history/[ID_du_Joueur]/[Timestamp]'
         db.ref(`player_history/${activePlayerId}/${timestamp}`).set(performanceRecord, (error) => {
             if (!error) {
                 alert("Données de performance enregistrées avec succès !");
