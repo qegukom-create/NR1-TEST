@@ -45,23 +45,47 @@
             padding: 12px; border-top: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             display: flex; flex-direction: column; justify-content: space-between;
             cursor: pointer; transition: transform 0.2s;
+            position: relative;
         }
-        .building-box:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .building-box:hover { border-color: var(--primary); }
         
         .building-name { font-weight: bold; color: white; display: block; margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         
-        .slot { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+        .slot { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; position: relative; }
         .slot:last-child { margin-bottom: 0; }
         .slot label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
         
-        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 8px; border-radius: 5px; font-size: 0.85rem; outline: none; width: 100%; cursor: pointer; }
-        select:hover { border-color: var(--primary); }
+        /* --- CUSTOM MULTISELECT DROPDOWN --- */
+        .multiselect { position: relative; width: 100%; user-select: none; }
+        .select-box { 
+            background: #0f172a; color: white; border: 1px solid var(--border); padding: 8px; 
+            border-radius: 5px; font-size: 0.85rem; cursor: pointer; display: flex; 
+            justify-content: space-between; align-items: center; box-sizing: border-box;
+        }
+        .select-box:hover { border-color: var(--primary); }
+        .select-box::after { content: '▼'; font-size: 0.6rem; color: #64748b; }
+        
+        .dropdown-content { 
+            display: none; position: absolute; background: #1e293b; min-width: 100%; 
+            border: 1px solid var(--primary); border-radius: 5px; z-index: 100; 
+            max-height: 160px; overflow-y: auto; box-shadow: 0px 8px 16px rgba(0,0,0,0.4);
+            box-sizing: border-box; padding: 4px 0;
+        }
+        .dropdown-content.show { display: block; }
+        
+        .dropdown-item { 
+            padding: 6px 10px; display: flex; align-items: center; gap: 8px; 
+            color: var(--text); font-size: 0.85rem; cursor: pointer; 
+        }
+        .dropdown-item:hover { background: #334155; }
+        .dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); margin: 0; }
 
         /* --- RESPONSIVE MODAL SYSTEM --- */
         .building-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 400px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 420px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .modal-header { font-size: 1.1rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; text-transform: uppercase; text-align: center; }
-        
+        .modal-body-scroll { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
+
         .btn-close-modal { background: var(--success); color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; font-size: 1rem; }
 
         /* Styles PC vs Mobile */
@@ -72,7 +96,6 @@
             .tab-btn { width: 100%; }
             .tactical-map { gap: 6px; padding: 8px; }
             
-            /* Sur mobile, on cache les formulaires directement dans la grille */
             .building-box .slot { display: none; }
             .building-box { padding: 8px 4px; min-height: 60px; justify-content: center; }
             .building-name { margin-bottom: 0; border-bottom: none; padding-bottom: 0; font-size: 0.65rem; letter-spacing: 0px; }
@@ -105,7 +128,7 @@
 <div class="building-modal" id="b-modal">
     <div class="modal-content">
         <div class="modal-header" id="modal-b-name">Bâtiment</div>
-        <div id="modal-slots-container"></div>
+        <div class="modal-body-scroll" id="modal-slots-container"></div>
         <button class="btn-close-modal" onclick="closeBuildingModal()">✅ OK / Fermer</button>
     </div>
 </div>
@@ -123,8 +146,8 @@
     let currentLegion = 'legion1';
     let allianceDatabase = {};
     let globalExperience = {};
+    let activeDropdown = null;
 
-    // Liste complète et mise à jour des coordonnées
     const mapLayout = {
         "1-2": { id: "Belltower", name: "Bell Tower" },
         "1-4": { id: "Abbey-1", name: "Abbey 1" },
@@ -134,31 +157,76 @@
         "3-1": { id: "Abbey-3", name: "Abbey 3" },
         "3-3": { id: "Swordshrine", name: "Swordshrine" },
         "3-5": { id: "Southeast-Sanctum", name: "Southeast Sanctum" },
-        "4-1": { id: "Abbey-4", name: "Abbey 4" }, // Placé sous Abbey 3
+        "4-1": { id: "Abbey-4", name: "Abbey 4" }, 
         "4-3": { id: "Hall-of-Reformation", name: "Hall of Reformation" },
-        "4-5": { id: "Stables", name: "Stables" } // Placé sous Southeast Sanctum
+        "4-5": { id: "Stables", name: "Stables" } 
     };
+
+    // Fermer les menus déroulants si on clique à côté
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.multiselect')) {
+            closeAllDropdowns();
+        }
+    });
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+        activeDropdown = null;
+    }
+
+    function toggleDropdown(id, event) {
+        if (window.innerWidth <= 900) return; // Empêcher le déploiement sur PC lors du clic mobile involontaire
+        event.stopPropagation();
+        const el = document.getElementById(id);
+        const willShow = !el.classList.contains('show');
+        closeAllDropdowns();
+        if (willShow) {
+            el.classList.add('show');
+            activeDropdown = el;
+        }
+    }
+
+    function generateCheckboxItems(buildingId, role, pList, isMobile = false) {
+        let html = '';
+        const prefix = isMobile ? 'mob' : 'pc';
+        
+        pList.forEach(p => {
+            html += `
+                <label class="dropdown-item" onclick="event.stopPropagation();">
+                    <input type="checkbox" 
+                           id="${prefix}-chk-${buildingId}-${role}-${p.id}" 
+                           data-building="${buildingId}" 
+                           data-role="${role}" 
+                           data-playerid="${p.id}" 
+                           onchange="handleCheckboxChange('${buildingId}', '${role}', '${p.id}', this.checked, ${isMobile})">
+                    <span>${p.name}</span>
+                </label>
+            `;
+        });
+        return html;
+    }
 
     function buildGridHTML() {
         const gridContainer = document.getElementById('map-grid');
         gridContainer.innerHTML = '';
 
-        let commandersOptions = '<option value="">Unassigned</option>';
-        let offenseOptions = '<option value="">Unassigned</option>';
-        let defenseOptions = '<option value="">Unassigned</option>';
+        const lists = { commander: [], rally1: [], rally2: [], garrison: [] };
+        const sortedIds = Object.keys(allianceDatabase).sort((a,b) => allianceDatabase[a].name.localeCompare(allianceDatabase[b].name));
 
-        const sortedPlayerIds = Object.keys(allianceDatabase).sort((a,b) => 
-            allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
-        );
-
-        sortedPlayerIds.forEach(id => {
+        sortedIds.forEach(id => {
             const pName = allianceDatabase[id].name;
             const pRoles = globalExperience[id] || [];
-            
-            if (pRoles.includes("Commander")) commandersOptions += `<option value="${id}">${pName}</option>`;
-            if (pRoles.includes("Rally-Leader") || pRoles.includes("Assassins")) offenseOptions += `<option value="${id}">${pName}</option>`;
-            if (pRoles.includes("Defenders") || pRoles.includes("Support")) defenseOptions += `<option value="${id}">${pName}</option>`;
+            const pObj = { id: id, name: pName };
+
+            if (pRoles.includes("Commander")) lists.commander.push(pObj);
+            if (pRoles.includes("Rally-Leader") || pRoles.includes("Assassins")) {
+                lists.rally1.push(pObj);
+                lists.rally2.push(pObj);
+            }
+            if (pRoles.includes("Defenders") || pRoles.includes("Support")) lists.garrison.push(pObj);
         });
+
+        window.cachedLists = lists; // Garder en mémoire pour la modale mobile
 
         for (let row = 1; row <= 5; row++) {
             for (let col = 1; col <= 5; col++) {
@@ -172,30 +240,42 @@
                             
                             <div class="slot">
                                 <label>👑 Commander</label>
-                                <select id="pc-${b.id}-commander" data-building="${b.id}" data-role="commander" onchange="saveAssignment('${b.id}', 'commander', this.value)">
-                                    ${commandersOptions}
-                                </select>
+                                <div class="multiselect">
+                                    <div class="select-box" id="pc-box-${b.id}-commander" onclick="toggleDropdown('pc-drop-${b.id}-commander', event)">Unassigned</div>
+                                    <div class="dropdown-content" id="pc-drop-${b.id}-commander">
+                                        ${generateCheckboxItems(b.id, 'commander', lists.commander, false)}
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="slot">
                                 <label>⚔️ Rally 1</label>
-                                <select id="pc-${b.id}-rl1" data-building="${b.id}" data-role="rl1" onchange="saveAssignment('${b.id}', 'rl1', this.value)">
-                                    ${offenseOptions}
-                                </select>
+                                <div class="multiselect">
+                                    <div class="select-box" id="pc-box-${b.id}-rally1" onclick="toggleDropdown('pc-drop-${b.id}-rally1', event)">Unassigned</div>
+                                    <div class="dropdown-content" id="pc-drop-${b.id}-rally1">
+                                        ${generateCheckboxItems(b.id, 'rally1', lists.rally1, false)}
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="slot">
                                 <label>⚔️ Rally 2</label>
-                                <select id="pc-${b.id}-rl2" data-building="${b.id}" data-role="rl2" onchange="saveAssignment('${b.id}', 'rl2', this.value)">
-                                    ${offenseOptions}
-                                </select>
+                                <div class="multiselect">
+                                    <div class="select-box" id="pc-box-${b.id}-rally2" onclick="toggleDropdown('pc-drop-${b.id}-rally2', event)">Unassigned</div>
+                                    <div class="dropdown-content" id="pc-drop-${b.id}-rally2">
+                                        ${generateCheckboxItems(b.id, 'rally2', lists.rally2, false)}
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="slot">
                                 <label>🛡️ Garrison</label>
-                                <select id="pc-${b.id}-garrison" data-building="${b.id}" data-role="garrison" onchange="saveAssignment('${b.id}', 'garrison', this.value)">
-                                    ${defenseOptions}
-                                </select>
+                                <div class="multiselect">
+                                    <div class="select-box" id="pc-box-${b.id}-garrison" onclick="toggleDropdown('pc-drop-${b.id}-garrison', event)">Unassigned</div>
+                                    <div class="dropdown-content" id="pc-drop-${b.id}-garrison">
+                                        ${generateCheckboxItems(b.id, 'garrison', lists.garrison, false)}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -204,68 +284,104 @@
                 }
             }
         }
+    }
+
+    function handleCheckboxChange(buildingId, role, playerId, isChecked, isMobileTrigger) {
+        // Synchroniser visuellement PC <=> Mobile en direct
+        const mirrorPrefix = isMobileTrigger ? 'pc' : 'mob';
+        const mirrorCheckbox = document.getElementById(`${mirrorPrefix}-chk-${buildingId}-${role}-${playerId}`);
+        if (mirrorCheckbox) mirrorCheckbox.checked = isChecked;
+
+        // Sauvegarder l'état dans Firebase pour ce joueur précis
+        db.ref(`swordland_tactical/${currentLegion}/${buildingId}/${role}/${playerId}`).set(isChecked ? true : null);
         
-        window.optComm = commandersOptions;
-        window.optOff = offenseOptions;
-        window.optDef = defenseOptions;
+        // Mettre à jour immédiatement les labels de comptage localement
+        updateBoxLabel(buildingId, role);
+    }
+
+    function updateBoxLabel(buildingId, role) {
+        // On compte les cases cochées sur la version PC
+        const checkedBoxes = document.querySelectorAll(`[id^="pc-chk-${buildingId}-${role}-"]:checked`);
+        const count = checkedBoxes.length;
+        
+        let txt = "Unassigned";
+        if (count === 1) {
+            txt = allianceDatabase[checkedBoxes[0].getAttribute('data-playerid')]?.name || "1 Player";
+        } else if (count > 1) {
+            txt = `${count} Selected`;
+        }
+
+        // Met à jour l'affichage sur PC
+        const pcBox = document.getElementById(`pc-box-${buildingId}-${role}`);
+        if (pcBox) pcBox.innerText = txt;
+
+        // Met à jour l'affichage sur Mobile si la modale est ouverte
+        const mobBox = document.getElementById(`mob-box-${buildingId}-${role}`);
+        if (mobBox) mobBox.innerText = txt;
     }
 
     function openBuildingModal(buildingId, buildingName) {
         if (window.innerWidth > 900) return;
 
         document.getElementById('modal-b-name').innerText = `📍 ${buildingName}`;
-        
-        const currentComm = document.getElementById(`pc-${buildingId}-commander`).value;
-        const currentRl1 = document.getElementById(`pc-${buildingId}-rl1`).value;
-        const currentRl2 = document.getElementById(`pc-${buildingId}-rl2`).value;
-        const currentGarr = document.getElementById(`pc-${buildingId}-garrison`).value;
-
         const container = document.getElementById('modal-slots-container');
+        
+        // Génération de l'interface mobile (les listes déroulantes restent ouvertes nativement dans la modale)
         container.innerHTML = `
-            <div class="slot">
-                <label style="font-size:0.8rem; margin-bottom:4px;">👑 Commander</label>
-                <select id="mob-${buildingId}-commander" onchange="syncAndSave('${buildingId}', 'commander', this.value)">
-                    ${window.optComm}
-                </select>
+            <div class="slot" style="display:block; margin-bottom:15px;">
+                <label style="font-size:0.8rem;">👑 Commander</label>
+                <div class="multiselect" style="margin-top:5px;">
+                    <div class="select-box" id="mob-box-${buildingId}-commander" onclick="document.getElementById('mob-drop-${buildingId}-commander').classList.toggle('show')">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-commander" style="position:static; display:none; max-height:140px;">
+                        ${generateCheckboxItems(buildingId, 'commander', window.cachedLists.commander, true)}
+                    </div>
+                </div>
             </div>
-            <br>
-            <div class="slot">
-                <label style="font-size:0.8rem; margin-bottom:4px;">⚔️ Rally 1 (RL / Assassin)</label>
-                <select id="mob-${buildingId}-rl1" onchange="syncAndSave('${buildingId}', 'rl1', this.value)">
-                    ${window.optOff}
-                </select>
+            <div class="slot" style="display:block; margin-bottom:15px;">
+                <label style="font-size:0.8rem;">⚔️ Rally 1 (RL / Assassin)</label>
+                <div class="multiselect" style="margin-top:5px;">
+                    <div class="select-box" id="mob-box-${buildingId}-rally1" onclick="document.getElementById('mob-drop-${buildingId}-rally1').classList.toggle('show')">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally1" style="position:static; display:none; max-height:140px;">
+                        ${generateCheckboxItems(buildingId, 'rally1', window.cachedLists.rally1, true)}
+                    </div>
+                </div>
             </div>
-            <br>
-            <div class="slot">
-                <label style="font-size:0.8rem; margin-bottom:4px;">⚔️ Rally 2 (RL / Assassin)</label>
-                <select id="mob-${buildingId}-rl2" onchange="syncAndSave('${buildingId}', 'rl2', this.value)">
-                    ${window.optOff}
-                </select>
+            <div class="slot" style="display:block; margin-bottom:15px;">
+                <label style="font-size:0.8rem;">⚔️ Rally 2 (RL / Assassin)</label>
+                <div class="multiselect" style="margin-top:5px;">
+                    <div class="select-box" id="mob-box-${buildingId}-rally2" onclick="document.getElementById('mob-drop-${buildingId}-rally2').classList.toggle('show')">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-rally2" style="position:static; display:none; max-height:140px;">
+                        ${generateCheckboxItems(buildingId, 'rally2', window.cachedLists.rally2, true)}
+                    </div>
+                </div>
             </div>
-            <br>
-            <div class="slot">
-                <label style="font-size:0.8rem; margin-bottom:4px;">🛡️ Garrison (Def / Support)</label>
-                <select id="mob-${buildingId}-garrison" onchange="syncAndSave('${buildingId}', 'garrison', this.value)">
-                    ${window.optDef}
-                </select>
+            <div class="slot" style="display:block; margin-bottom:5px;">
+                <label style="font-size:0.8rem;">🛡️ Garrison (Def / Support)</label>
+                <div class="multiselect" style="margin-top:5px;">
+                    <div class="select-box" id="mob-box-${buildingId}-garrison" onclick="document.getElementById('mob-drop-${buildingId}-garrison').classList.toggle('show')">Unassigned</div>
+                    <div class="dropdown-content" id="mob-drop-${buildingId}-garrison" style="position:static; display:none; max-height:140px;">
+                        ${generateCheckboxItems(buildingId, 'garrison', window.cachedLists.garrison, true)}
+                    </div>
+                </div>
             </div>
         `;
 
-        document.getElementById(`mob-${buildingId}-commander`).value = currentComm;
-        document.getElementById(`mob-${buildingId}-rl1`).value = currentRl1;
-        document.getElementById(`mob-${buildingId}-rl2`).value = currentRl2;
-        document.getElementById(`mob-${buildingId}-garrison`).value = currentGarr;
+        // Reporter l'état des cases cochées PC vers Mobile dans la modale
+        document.querySelectorAll(`[id^="pc-chk-${buildingId}-"]`).forEach(pcChk => {
+            const role = pcChk.getAttribute('data-role');
+            const pId = pcChk.getAttribute('data-playerid');
+            const mobChk = document.getElementById(`mob-chk-${buildingId}-${role}-${pId}`);
+            if (mobChk) mobChk.checked = pcChk.checked;
+        });
+
+        // Forcer la mise à jour des en-têtes de boutons mobiles
+        ['commander', 'rally1', 'rally2', 'garrison'].forEach(r => updateBoxLabel(buildingId, r));
 
         document.getElementById('b-modal').style.display = 'flex';
     }
 
     function closeBuildingModal() {
         document.getElementById('b-modal').style.display = 'none';
-    }
-
-    function syncAndSave(buildingId, role, value) {
-        document.getElementById(`pc-${buildingId}-${role}`).value = value;
-        saveAssignment(buildingId, role, value);
     }
 
     function init() {
@@ -286,24 +402,33 @@
         loadAssignments();
     }
 
-    function saveAssignment(building, role, playerId) {
-        db.ref(`swordland_tactical/${currentLegion}/${building}/${role}`).set(playerId);
-    }
-
     function loadAssignments() {
         db.ref(`swordland_tactical/${currentLegion}`).once('value', snap => {
             const data = snap.val() || {};
             
-            document.querySelectorAll('select').forEach(s => s.value = "");
+            // Tout décocher par défaut avant le chargement
+            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
 
             Object.keys(data).forEach(buildingId => {
                 const roles = data[buildingId];
                 Object.keys(roles).forEach(role => {
-                    const select = document.querySelector(`select[data-building="${buildingId}"][data-role="${role}"]`);
-                    if (select) {
-                        select.value = roles[role];
+                    const playersObj = roles[role]; // Structure: { playerId1: true, playerId2: true }
+                    if (playersObj && typeof playersObj === 'object') {
+                        Object.keys(playersObj).forEach(pId => {
+                            const pcChk = document.getElementById(`pc-chk-${buildingId}-${role}-${pId}`);
+                            if (pcChk) pcChk.checked = true;
+                        });
                     }
+                    // Mettre à jour l'en-tête du sélecteur textuel
+                    updateBoxLabel(buildingId, role);
                 });
+            });
+            
+            // Pour les bâtiments vides non présents dans la DB, reset le texte à "Unassigned"
+            Object.values(mapLayout).forEach(b => {
+                if (!data[b.id]) {
+                    ['commander', 'rally1', 'rally2', 'garrison'].forEach(r => updateBoxLabel(b.id, r));
+                }
             });
         });
     }
