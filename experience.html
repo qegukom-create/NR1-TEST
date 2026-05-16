@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,12 +22,13 @@
 
         /* Setup Area */
         .setup-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; }
-        select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; width: 100%; }
+        select, input[type="text"] { background: #0f172a; color: white; border: 1px solid var(--border); padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; }
+        select { width: 100%; }
         .btn-add { background: var(--primary); color: #0f172a; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-add:hover { background: #f59e0b; }
 
         /* Grid Vignettes */
-        .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .role-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; border-top: 4px solid var(--primary); }
         .role-title { font-weight: bold; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; }
         
@@ -38,6 +39,27 @@
         .player-name:hover { color: var(--primary); text-decoration: underline; }
         .btn-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: bold; font-size: 0.85rem; padding: 0 5px; }
         .btn-remove:hover { transform: scale(1.2); }
+
+        /* Section Restitution */
+        .restitution-section { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 25px; overflow-x: auto; margin-top: 30px; }
+        .section-title { color: var(--primary); text-transform: uppercase; font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; letter-spacing: 1px; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { color: var(--primary); padding: 15px; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        
+        /* Highlight row style for assigned role players */
+        tr.has-role { background: rgba(251, 191, 36, 0.06) !important; }
+        tr.has-role td { border-bottom: 1px solid rgba(251, 191, 36, 0.2); }
+        tr.has-role:hover { background: rgba(251, 191, 36, 0.1) !important; }
+        
+        .score-text { color: #34d399; font-weight: bold; }
+        .avg-text { font-size: 0.8rem; color: #94a3b8; font-weight: normal; display: block; margin-top: 2px; }
+        .tag { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+        .tag-ok { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .tag-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .no-data { opacity: 0.4; font-style: italic; }
 
         /* Modal Dialog Style */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
@@ -54,17 +76,12 @@
         .btn-cancel { background: #334155; color: white; }
         .btn-save { background: var(--success); color: #0f172a; }
 
-        /* --- RESPONSIVE MEDIA QUERIES --- */
         @media (max-width: 768px) {
             body { padding: 10px; }
             .header-area { flex-direction: column; gap: 15px; text-align: center; }
             .header-title h1 { font-size: 1.5rem; }
             .btn-nav { width: 100%; text-align: center; box-sizing: border-box; }
-            
-            /* Empilement vertical de la barre d'outils */
             .setup-box { flex-direction: column; gap: 12px; padding: 12px; }
-            
-            /* Grille forcée à une colonne sur les écrans très étroits */
             .roles-grid { grid-template-columns: 1fr; gap: 15px; }
         }
     </style>
@@ -80,7 +97,7 @@
     </div>
 
     <div class="setup-box">
-        <select id="select-player"><option value="">Sélect player...</option></select>
+        <select id="select-player"><option value="">Select player...</option></select>
         <select id="select-role">
             <option value="Commander">👑 Commander</option>
             <option value="Rally-Leader">⚔️ Rally Leader</option>
@@ -91,6 +108,7 @@
         <button class="btn-add" onclick="addRoleToPlayer()">Assign</button>
     </div>
 
+    <!-- Roles Grid -->
     <div class="roles-grid">
         <div class="role-card"><div class="role-title">👑 Commanders</div><ul class="player-list" id="role-Commander"></ul></div>
         <div class="role-card"><div class="role-title">⚔️ Rally Leaders</div><ul class="player-list" id="role-Rally-Leader"></ul></div>
@@ -98,28 +116,41 @@
         <div class="role-card"><div class="role-title">❤️ Support</div><ul class="player-list" id="role-Support"></ul></div>
         <div class="role-card"><div class="role-title">🥷 Assassins</div><ul class="player-list" id="role-Assassins"></ul></div>
     </div>
+
+    <!-- Restitution Leaderboard Sorted by Average -->
+    <div class="restitution-section">
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+            <h2 class="section-title">📊 Average Ranking Leaderboard (Top 4 Weeks)</h2>
+            <input type="text" id="searchInput" placeholder="Search player..." onkeyup="filterTable()" style="width:250px;">
+        </div>
+        <table>
+            <thead id="tableHeader"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
+<!-- Performance Tracking Modal -->
 <div class="modal" id="tracking-modal">
     <div class="modal-content">
-        <div class="modal-header" id="modal-player-title">Suivi de performance</div>
+        <div class="modal-header" id="modal-player-title">Performance Tracking</div>
         
         <div class="form-group">
-            <label>Présence à l'événement</label>
+            <label>Event Attendance</label>
             <label class="checkbox-group">
                 <input type="checkbox" id="modal-present" checked>
-                <span>Présent / Actif</span>
+                <span>Present / Active</span>
             </label>
         </div>
 
         <div class="form-group">
-            <label>Points / Score marqué</label>
+            <label>Points / Score Gained (Weekly)</label>
             <input type="number" id="modal-score" placeholder="Ex: 150000" min="0">
         </div>
 
         <div class="modal-actions">
-            <button class="btn-modal btn-cancel" onclick="closeModal()">Annuler</button>
-            <button class="btn-modal btn-save" onclick="saveTrackingData()">Sauvegarder</button>
+            <button class="btn-modal btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-modal btn-save" onclick="saveTrackingData()">Save Data</button>
         </div>
     </div>
 </div>
@@ -137,16 +168,27 @@
     const rolesList = ["Commander", "Rally-Leader", "Defenders", "Support", "Assassins"];
     let allianceDatabase = {};
     let globalExperience = {};
+    let experienceReports = {};
     let activePlayerId = null;
+
+    function getISOWeekKey() {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        const yearStart = new Date(d.getFullYear(), 0, 1);
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return `${d.getFullYear()}-W${weekNo < 10 ? '0' + weekNo : weekNo}`;
+    }
 
     function init() {
         db.ref().on('value', snap => {
             const data = snap.val() || {};
             allianceDatabase = data.alliance_database || {};
             globalExperience = data.global_experience || {};
+            experienceReports = data.experience_reports || {};
 
             const selectPlayer = document.getElementById('select-player');
-            selectPlayer.innerHTML = '<option value="">Select player...</option>';
+            selectPlayer.innerHTML = '<option value="">Select a Player...</option>';
             
             const sortedIds = Object.keys(allianceDatabase).sort((a,b) => 
                 allianceDatabase[a].name.localeCompare(allianceDatabase[b].name)
@@ -177,7 +219,104 @@
                     }
                 });
             });
+
+            renderExperienceTable();
         });
+    }
+
+    function renderExperienceTable() {
+        const header = document.getElementById('tableHeader');
+        const body = document.getElementById('tableBody');
+        body.innerHTML = "";
+
+        let uniqueWeeks = new Set();
+        Object.keys(experienceReports).forEach(pId => {
+            Object.keys(experienceReports[pId]).forEach(weekKey => {
+                uniqueWeeks.add(weekKey);
+            });
+        });
+
+        const last4Weeks = Array.from(uniqueWeeks).sort((a, b) => b.localeCompare(a)).slice(0, 4);
+
+        let weekHeadersHtml = "";
+        for (let i = 0; i < 4; i++) {
+            if (last4Weeks[i]) {
+                weekHeadersHtml += `<th>Week ${last4Weeks[i].replace('-W', ' / ')}</th>`;
+            } else {
+                weekHeadersHtml += `<th>No Report</th>`;
+            }
+        }
+        header.innerHTML = `<tr><th>Player Name</th>${weekHeadersHtml}</tr>`;
+
+        const structuredPlayers = Object.keys(allianceDatabase).map(id => {
+            let totalScore = 0;
+            let totalActiveWeeks = 0; 
+            let historyByWeek = {};
+
+            const pReports = experienceReports[id] || {};
+
+            last4Weeks.forEach(weekKey => {
+                if (pReports[weekKey]) {
+                    historyByWeek[weekKey] = pReports[weekKey];
+                    if (pReports[weekKey].present && pReports[weekKey].score > 0) {
+                        totalScore += pReports[weekKey].score;
+                        totalActiveWeeks++;
+                    }
+                } else {
+                    historyByWeek[weekKey] = null;
+                }
+            });
+
+            const averageScore = totalActiveWeeks > 0 ? (totalScore / totalActiveWeeks) : 0;
+            
+            // STRICT SECURITY FIX: Ensure globalExperience[id] exists, is an Array, and contains at least 1 element
+            const hasAssignedRole = globalExperience[id] && Array.isArray(globalExperience[id]) && globalExperience[id].length > 0;
+
+            return {
+                id: id,
+                name: allianceDatabase[id].name,
+                average: averageScore,
+                historyByWeek: historyByWeek,
+                hasRole: hasAssignedRole
+            };
+        });
+
+        // SORT BY AVERAGE SCORE OF THE 4 ACTIVE WEEKS (DESCENDING)
+        structuredPlayers.sort((a, b) => b.average - a.average || a.name.localeCompare(b.name));
+
+        structuredPlayers.forEach(pObj => {
+            const displayAverage = pObj.average > 0 ? `${Math.round(pObj.average).toLocaleString()} pts avg.` : "No score";
+            
+            // Add custom highlight class only if player has an explicitly active array of roles
+            const rowClass = pObj.hasRole ? 'class="has-role"' : '';
+
+            let rowHtml = `<td>
+                <b>${pObj.name}</b>
+                <span class="avg-text">⭐ ${displayAverage}</span>
+            </td>`;
+
+            for (let i = 0; i < 4; i++) {
+                const targetWeek = last4Weeks[i];
+                if (!targetWeek) {
+                    rowHtml += `<td><span class="no-data">-</span></td>`;
+                } else {
+                    const weekData = pObj.historyByWeek[targetWeek];
+                    if (!weekData) {
+                        rowHtml += `<td><span class="no-data">Not evaluated</span></td>`;
+                    } else if (!weekData.present) {
+                        rowHtml += `<td><span class="tag tag-danger">❌ Absent</span></td>`;
+                    } else {
+                        rowHtml += `<td>
+                            <div><span class="tag tag-ok">✅ Present</span></div>
+                            <div class="score-text" style="margin-top:4px;">${weekData.score.toLocaleString()} pts</div>
+                        </td>`;
+                    }
+                }
+            }
+            body.innerHTML += `<tr ${rowClass}>${rowHtml}</tr>`;
+        });
+
+        filterTable();
     }
 
     function addRoleToPlayer() {
@@ -185,7 +324,11 @@
         const role = document.getElementById('select-role').value;
         if (!pId || !role) return;
 
-        let currentRoles = globalExperience[pId] || [];
+        let currentRoles = globalExperience[pId];
+        if (!currentRoles || !Array.isArray(currentRoles)) {
+            currentRoles = [];
+        }
+        
         if (!currentRoles.includes(role)) {
             currentRoles.push(role);
             db.ref(`global_experience/${pId}`).set(currentRoles);
@@ -193,7 +336,9 @@
     }
 
     function removeRole(pId, role) {
-        let currentRoles = globalExperience[pId] || [];
+        let currentRoles = globalExperience[pId];
+        if (!currentRoles || !Array.isArray(currentRoles)) return;
+        
         const updatedRoles = currentRoles.filter(r => r !== role);
         
         if (updatedRoles.length === 0) {
@@ -205,9 +350,9 @@
 
     function openTrackingModal(playerId) {
         activePlayerId = playerId;
-        const pName = allianceDatabase[playerId]?.name || "Joueur Inconnu";
+        const pName = allianceDatabase[playerId]?.name || "Unknown Player";
         
-        document.getElementById('modal-player-title').innerText = `📊 Suivi : ${pName}`;
+        document.getElementById('modal-player-title').innerText = `📊 Track : ${pName}`;
         document.getElementById('modal-present').checked = true;
         document.getElementById('modal-score').value = "";
         
@@ -225,24 +370,32 @@
         const isPresent = document.getElementById('modal-present').checked;
         const score = parseInt(document.getElementById('modal-score').value) || 0;
         
-        const now = new Date();
-        const timestamp = now.getTime();
-        const dateString = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+        const currentWeekKey = getISOWeekKey();
 
         const performanceRecord = {
-            date: dateString,
             present: isPresent,
-            score: score
+            score: isPresent ? score : 0
         };
 
-        db.ref(`player_history/${activePlayerId}/${timestamp}`).set(performanceRecord, (error) => {
+        db.ref(`experience_reports/${activePlayerId}/${currentWeekKey}`).set(performanceRecord, (error) => {
             if (!error) {
-                alert("Données de performance enregistrées avec succès !");
+                alert(`Data recorded successfully for week ${currentWeekKey.replace('-W', ' / ')}!`);
                 closeModal();
             } else {
-                alert("Erreur lors de la sauvegarde.");
+                alert("Error while saving database content.");
             }
         });
+    }
+
+    function filterTable() {
+        const input = document.getElementById("searchInput").value.toUpperCase();
+        const rows = document.getElementById("tableBody").getElementsByTagName("tr");
+        for (let i = 0; i < rows.length; i++) {
+            let nameCell = rows[i].getElementsByTagName("td")[0];
+            if (nameCell) {
+                rows[i].style.display = nameCell.innerText.toUpperCase().indexOf(input) > -1 ? "" : "none";
+            }
+        }
     }
 
     init();
